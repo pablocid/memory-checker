@@ -62,6 +62,9 @@ const apiKeyHandler = (req, res, next) => {
 }
 app.use(apiKeyHandler);
 
+// enable CORS
+app.use(cors());
+
 // setting the sqlite and run the service
 const db = new Database(SQLITE_PATH_FILE, async (err) => {
     if (err) {
