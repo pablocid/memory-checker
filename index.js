@@ -3,7 +3,7 @@ const express = require('express');
 const { readFileSync } = require('fs');
 const { Database } = require('sqlite3');
 const { sign, verify } = require('jsonwebtoken');
-
+var cors = require('cors');
 const privateKEY = readFileSync('./private.key', 'utf8');
 const publicKEY = readFileSync('./public.key', 'utf8');
 const app = express();
@@ -61,6 +61,9 @@ const apiKeyHandler = (req, res, next) => {
 
 }
 app.use(apiKeyHandler);
+
+// enable CORS
+app.use(cors());
 
 // setting the sqlite and run the service
 const db = new Database(SQLITE_PATH_FILE, async (err) => {
