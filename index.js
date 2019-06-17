@@ -1,4 +1,4 @@
-const si = require('systeminformation');
+const { mem } = require('systeminformation');
 const express = require('express');
 const { readFileSync } = require('fs');
 const { Database } = require('sqlite3');
@@ -28,7 +28,6 @@ const verifyOptions = {
     algorithm: ["RS256"]
 };
 
-
 // setting the enviromental variables
 const SQLITE_PATH_FILE = process.env.SQLITE_PATH_FILE;
 const PORT = process.env.PORT;
@@ -36,6 +35,7 @@ const APIKEY = process.env.APIKEY;
 const MAX_RECORDS = process.env.MEMORY_RECORDS || 100;
 const SECONDS_INTERVAL = process.env.SECONDS_INTERVAL || 60;
 let defaultMemoryRecords = 10;
+const SERVER_NAME = process.env.SERVER_NAME || "Unknown server";
 
 // api hashmap
 const apiKeys = new Map();
@@ -116,7 +116,7 @@ function createTrigger() {
 }
 function startRegister() {
     setInterval(() => {
-        si.mem()
+        mem()
             .then(data => insertData(data))
             .catch(error => console.error(error));
     }, 1000 * SECONDS_INTERVAL);
@@ -156,7 +156,7 @@ function jsonFormat(d) {
     }
 }
 
-const payload = { server: "supertanker" };
+const payload = { server: SERVER_NAME };
 
 app.get('/login', function (req, res) {
     if (req.authType !== 'apikey') { res.send('loggin forbidden'); }
@@ -166,7 +166,7 @@ app.get('/is-logged', function (req, res) {
     res.json({ payload: req.jwtPayload, authType: req.authType, hola: "oliasflksajdfl" });
 });
 app.get('/memory', function (req, res) {
-    si.mem()
+    mem()
         .then(data => res.json(jsonFormat(data)))
         .catch(error => console.error(error));
 });
