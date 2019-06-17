@@ -8,9 +8,10 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "sqlite3": "^4.0.8",
     "systeminformation": "^4.9.1"
   }
