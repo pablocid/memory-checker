@@ -8,6 +8,8 @@ const privateKEY = readFileSync('./private.key', 'utf8');
 const publicKEY = readFileSync('./public.key', 'utf8');
 const app = express();
 
+var cpuStat = require('cpu-stat');
+
 // SIGNING OPTIONS
 const signOptions = {
     issuer: "SPEC",
@@ -32,10 +34,10 @@ const verifyOptions = {
 const SQLITE_PATH_FILE = process.env.SQLITE_PATH_FILE;
 const PORT = process.env.PORT;
 const APIKEY = process.env.APIKEY;
-const MAX_RECORDS = process.env.MEMORY_RECORDS || 100;
+const MAX_RECORDS = process.env.MAX_RECORDS || 100;
 const SECONDS_INTERVAL = process.env.SECONDS_INTERVAL || 60;
-let defaultMemoryRecords = 10;
 const SERVER_NAME = process.env.SERVER_NAME || "Unknown server";
+let defaultMemoryRecords = 10;
 
 // api hashmap
 const apiKeys = new Map();
@@ -43,7 +45,7 @@ apiKeys.set(APIKEY, { id: 1, name: 'Api key USER' });
 
 // middleware for checking the apikey
 const apiKeyHandler = (req, res, next) => {
-    // if (!req.query.apikey || !req.query.token) { res.status(401).send('api key or token do not exist!'); return; }
+    if (!req.query.apikey && !req.query.token) { res.status(401).send('Forbidden access'); return; }
 
     if (apiKeys.has(req.query.apikey)) {
         req.authType = "apikey";
@@ -55,7 +57,7 @@ const apiKeyHandler = (req, res, next) => {
             next();
         }
         catch (error) {
-            res.status(401).send('Forbidden');
+            res.status(403).send('Unauthorized');
         }
     }
 
@@ -92,7 +94,8 @@ function createTable() {
             buffcache INT,
             swaptotal INT,
             swapused INT,
-            swapfree INT
+            swapfree INT,
+            cpu INT
         )    
         `
             , (d, err) => {
@@ -120,13 +123,18 @@ function createTrigger() {
 function startRegister() {
     setInterval(() => {
         mem()
-            .then(data => insertData(data))
+            .then(data => {
+                cpuStat.usagePercent({ sampleMs: 150 }, function (err, percent, seconds) {
+                    if (err) { insertData(data); }
+                    else { insertData({ ...data, cpu: parseInt(percent) }); }
+                });
+            })
             .catch(error => console.error(error));
     }, 1000 * SECONDS_INTERVAL);
 }
 const insertData = (info) => {
     db.run(`
-    INSERT INTO memory (date, total, free, used, active, available, buffcache, swaptotal, swapused, swapfree) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    INSERT INTO memory (date, total, free, used, active, available, buffcache, swaptotal, swapused, swapfree, cpu) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
         [
             new Date().toISOString(),
             info.total,
@@ -138,6 +146,7 @@ const insertData = (info) => {
             info.swaptotal,
             info.swapused,
             info.swapfree,
+            info.cpu
         ]);
 }
 function jsonFormat(d) {
@@ -155,7 +164,8 @@ function jsonFormat(d) {
             total: d.swaptotal,
             used: d.swapused,
             free: d.swapfree
-        }
+        },
+        cpu: d.cpu
     }
 }
 
@@ -170,8 +180,19 @@ app.get('/is-logged', function (req, res) {
 });
 app.get('/memory', function (req, res) {
     mem()
-        .then(data => res.json(jsonFormat(data)))
+        .then(data => {
+            cpuStat.usagePercent({ sampleMs: 150 }, function (err, percent, seconds) {
+                if (err) { res.json(jsonFormat(data)); }
+                else { res.json(jsonFormat({ ...data, cpu: parseInt(percent) })); }
+            });
+        })
         .catch(error => console.error(error));
+});
+
+app.get('/cpu', function (req, res) {
+    cpuStat.usagePercent({ sampleMs: 150 }, function (err, percent, seconds) {
+        res.send(parseInt(percent));
+    });
 });
 app.get('/memory-history', function (req, res) {
 
