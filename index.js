@@ -37,12 +37,14 @@ const APIKEY = process.env.APIKEY;
 const MAX_RECORDS = process.env.MAX_RECORDS || 100;
 const SECONDS_INTERVAL = process.env.SECONDS_INTERVAL || 60;
 const SERVER_NAME = process.env.SERVER_NAME || "Unknown server";
-const DELETE_SQLITE_FILE_ON_RESTART = process.env.DELETE_SQLITE_FILE_ON_RESTART; 
+const DELETE_SQLITE_FILE_ON_RESTART = process.env.DELETE_SQLITE_FILE_ON_RESTART;
 let defaultMemoryRecords = 10;
+try {
+    if (DELETE_SQLITE_FILE_ON_RESTART) {
+        unlinkSync(SQLITE_PATH_FILE);
+    }
+} catch (error) { }
 
-if(DELETE_SQLITE_FILE_ON_RESTART){
-    unlinkSync(SQLITE_PATH_FILE);
-}
 // api hashmap
 const apiKeys = new Map();
 apiKeys.set(APIKEY, { id: 1, name: 'Api key USER' });
