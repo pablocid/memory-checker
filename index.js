@@ -202,7 +202,7 @@ app.get('/cpu', function (req, res) {
 });
 app.get('/memory-history', function (req, res) {
 
-    if (!isNaN(Number(req.query.limit))) { defaultMemoryRecords = Number(req.query.limit); }
+    if (req.query.limit && !isNaN(Number(req.query.limit))) { defaultMemoryRecords = Number(req.query.limit); }
 
     db.all(`SELECT * FROM memory ORDER BY id DESC LIMIT ${defaultMemoryRecords}`, (err, rows) => {
         if (err) { res.send(err); return; }
