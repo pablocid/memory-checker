@@ -39,11 +39,11 @@ const SECONDS_INTERVAL = process.env.SECONDS_INTERVAL || 60;
 const SERVER_NAME = process.env.SERVER_NAME || "Unknown server";
 const DELETE_SQLITE_FILE_ON_RESTART = process.env.DELETE_SQLITE_FILE_ON_RESTART;
 let defaultMemoryRecords = 10;
-// try {
-//     if (DELETE_SQLITE_FILE_ON_RESTART) {
-//         unlinkSync(SQLITE_PATH_FILE);
-//     }
-// } catch (error) { }
+try {
+    if (DELETE_SQLITE_FILE_ON_RESTART === 'YES') {
+        unlinkSync(SQLITE_PATH_FILE);
+    }
+} catch (error) { console.log(`File ${SQLITE_PATH_FILE} is already deleted`); }
 
 // api hashmap
 const apiKeys = new Map();
